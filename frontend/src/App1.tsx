@@ -6,8 +6,7 @@ import {
   File, FileImage, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet,
   HardDrive, Database, Server, CheckCircle, AlertCircle, Home, LogOut,
   Eye, EyeOff, Shield, UserPlus, ToggleLeft, ToggleRight, Lock,
-  Share2, UserCheck, Link2, Unlink,
-  Bell, BellOff, Trash
+  Share2, UserCheck, Link2, Unlink
 } from "lucide-react";
 
 const API = "http://192.168.43.183:8000";
@@ -18,7 +17,6 @@ type FolderItem = { id:string; name:string; type:"folder"; parentId:string|null;
 type Item = FileItem | FolderItem;
 type UserType = { id:string; username:string; email:string; is_admin:boolean; is_active:boolean; created_at:string; };
 type ShareItem = { id:string; item_type:"file"|"folder"; item_id:string; owner_id:string; shared_with_id:string; created_at:string; item_name?:string; owner_username?:string; shared_with_username?:string; };
-type NotifItem = { id:string; user_id:string; type:string; message:string; extra:string|null; is_read:boolean; created_at:string; };
 
 // ─── Themes ───────────────────────────────────────────────────────────────────
 
@@ -406,9 +404,6 @@ export default function App() {
   const [searchQuery,setSearchQuery] = useState("");
   const [section,setSection] = useState<string>("dashboard");
   const [toast,setToast] = useState<{msg:string;ok:boolean}|null>(null);
-  const [notifications,setNotifications] = useState<NotifItem[]>([]);
-  const [unreadCount,setUnreadCount] = useState(0);
-  const [showNotifPanel,setShowNotifPanel] = useState(false);
   const [pendingFile,setPendingFile] = useState<File|null>(null);
   const [dragOver,setDragOver] = useState(false);
   const [sidebarOpen,setSidebarOpen] = useState(false);
@@ -457,10 +452,10 @@ export default function App() {
   const loadData=async()=>{
     setLoading(true);
     try {
-      const [fr,fir,swr,sbr,ur,nr]=await Promise.all([
+      const [fr,fir,swr,sbr,ur]=await Promise.all([
         apiFetch("/folders"),apiFetch("/files"),
         apiFetch("/shares/with-me"),apiFetch("/shares/by-me"),
-        apiFetch("/users"),apiFetch("/notifications"),
+        apiFetch("/users"),
       ]);
       if(fr&&fir){
         const fd=await fr.json(); const fid=await fir.json();
@@ -472,25 +467,11 @@ export default function App() {
       if(swr){setSharedWithMe(await swr.json());}
       if(sbr){setSharedByMe(await sbr.json());}
       if(ur){setUsers(await ur.json());}
-      if(nr){
-        const notifs=await nr.json();
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter((n:NotifItem)=>!n.is_read).length);
-      }
     } catch{showToast("Erreur de chargement",false);}
     setLoading(false);
   };
 
-  // Polling notifications toutes les 30 secondes
-  useEffect(()=>{
-    if(!currentUser)return;
-    loadData();
-    const interval=setInterval(async()=>{
-      const res=await apiFetch("/notifications/unread-count");
-      if(res&&res.ok){const d=await res.json();setUnreadCount(d.count);}
-    },30000);
-    return ()=>clearInterval(interval);
-  },[currentUser]);
+  useEffect(()=>{if(currentUser)loadData();},[currentUser]);
 
   const files=useMemo(()=>items.filter(i=>i.type==="file") as FileItem[],[items]);
   const folders=useMemo(()=>items.filter(i=>i.type==="folder") as FolderItem[],[items]);
@@ -506,7 +487,7 @@ export default function App() {
     if(!res||!res.ok){showToast("Erreur création dossier",false);return;}
     const d=await res.json();
     setItems(p=>[...p,{id:d.id,name:d.name,type:"folder",parentId:d.parent_id??null,isOpen:false,owner_id:d.owner_id}]);
-    showToast(`Dossier "${name}" créé ✓`); loadNotifications();
+    showToast(`Dossier "${name}" créé ✓`);
   };
 
   const uploadFile=async()=>{
@@ -518,7 +499,7 @@ export default function App() {
     if(!res.ok){showToast("Erreur upload",false);setUploading(false);return;}
     const d=await res.json();
     setItems(p=>[...p,{id:d.id,name:d.name,type:"file",ext:d.ext??d.name.split(".").pop()??"txt",size:formatSize(d.size),storage_path:d.storage_path,modified:formatDate(d.created_at),parentId:d.folder_id??null,owner_id:d.owner_id}]);
-    showToast(`"${pendingFile.name}" téléversé ✓`); loadNotifications();
+    showToast(`"${pendingFile.name}" téléversé ✓`);
     setUploading(false);
   };
 
@@ -531,7 +512,7 @@ export default function App() {
   const deleteFile=async(id:string)=>{
     const res=await apiFetch(`/files/${id}`,{method:"DELETE"});
     if(!res||!res.ok){showToast("Erreur suppression",false);return;}
-    setItems(p=>p.filter(i=>i.id!==id));showToast("Fichier supprimé"); loadNotifications();
+    setItems(p=>p.filter(i=>i.id!==id));showToast("Fichier supprimé");
   };
 
   const downloadFile=(file:FileItem)=>window.open(`${API}/uploads/${file.storage_path}`,"_blank");
@@ -545,7 +526,7 @@ export default function App() {
     if(!res||!res.ok){const d=await res?.json();showToast(d?.detail||"Erreur partage",false);return;}
     const d=await res.json();
     setSharedByMe(p=>[d,...p]);
-    showToast(`Partagé avec ${users.find(u=>u.id===shareTargetUserId)?.username} ✓`); loadNotifications();
+    showToast(`Partagé avec ${users.find(u=>u.id===shareTargetUserId)?.username} ✓`);
   };
 
   const deleteShare=async(id:string)=>{
@@ -560,7 +541,7 @@ export default function App() {
     if(!newUserForm.username||!newUserForm.email||!newUserForm.password){showToast("Remplissez tous les champs",false);return;}
     const res=await apiFetch("/users",{method:"POST",body:JSON.stringify(newUserForm)});
     if(!res||!res.ok){const d=await res?.json();showToast(d?.detail||"Erreur création",false);return;}
-    const d=await res.json();setUsers(p=>[...p,d]);showToast(`Utilisateur "${newUserForm.username}" créé ✓`); loadNotifications();
+    const d=await res.json();setUsers(p=>[...p,d]);showToast(`Utilisateur "${newUserForm.username}" créé ✓`);
   };
 
   const toggleUser=async(id:string)=>{
@@ -574,34 +555,6 @@ export default function App() {
     const res=await apiFetch(`/users/${id}`,{method:"DELETE"});
     if(!res||!res.ok){showToast("Erreur suppression",false);return;}
     setUsers(p=>p.filter(u=>u.id!==id));showToast("Utilisateur supprimé");
-  };
-
-  // ── Notification functions ──
-  const loadNotifications=async()=>{
-    const res=await apiFetch("/notifications");
-    if(res&&res.ok){
-      const notifs=await res.json();
-      setNotifications(notifs);
-      setUnreadCount(notifs.filter((n:NotifItem)=>!n.is_read).length);
-    }
-  };
-
-  const markAllRead=async()=>{
-    await apiFetch("/notifications/read-all",{method:"PUT"});
-    setNotifications(p=>p.map(n=>({...n,is_read:true})));
-    setUnreadCount(0);
-  };
-
-  const clearAllNotifications=async()=>{
-    await apiFetch("/notifications/clear",{method:"DELETE"});
-    setNotifications([]);
-    setUnreadCount(0);
-  };
-
-  const markOneRead=async(id:string)=>{
-    await apiFetch(`/notifications/${id}/read`,{method:"PUT"});
-    setNotifications(p=>p.map(n=>n.id===id?{...n,is_read:true}:n));
-    setUnreadCount(p=>Math.max(0,p-1));
   };
 
   const confirmModal=async()=>{
@@ -629,7 +582,7 @@ export default function App() {
   },[folders,selectedId,items]);
 
   const totalSize=useMemo(()=>files.reduce((a,f)=>a+parseFloat(f.size),0).toFixed(1),[files]);
-  const navigate=(s:string)=>{setSection(s);setSidebarOpen(false);setShowNotifPanel(false);};
+  const navigate=(s:string)=>{setSection(s);setSidebarOpen(false);};
 
   const TreeNode=({item,depth=0}:{item:Item;depth?:number})=>{
     const ch=getChildren(item.id);const isF=item.type==="folder";
@@ -788,8 +741,6 @@ export default function App() {
         .content{flex:1;overflow-y:auto;padding:20px}
         .content::-webkit-scrollbar{width:5px}
         .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-        .notif-panel::-webkit-scrollbar{width:4px}
-        .notif-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
         .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;transition:transform .15s,border-color .15s;animation:fadeIn .3s ease both}
         .stat-card:hover{transform:translateY(-2px);border-color:var(--accent)}
@@ -925,91 +876,6 @@ export default function App() {
                 <button className="btn-primary" onClick={()=>openModal("newUser")}><UserPlus size={14}/>Nouvel utilisateur</button>
               </div>
             )}
-            {/* 🔔 Cloche notifications */}
-            <div style={{position:"relative",flexShrink:0}}>
-              <button
-                onClick={()=>setShowNotifPanel(p=>!p)}
-                style={{position:"relative",background:"var(--card2)",border:"1px solid var(--border)",borderRadius:9,padding:"7px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"var(--text)",transition:"background .15s"}}
-                className="btn-icon">
-                <Bell size={18}/>
-                {unreadCount>0&&(
-                  <span style={{position:"absolute",top:-5,right:-5,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,width:18,height:18,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid var(--bg)"}}>
-                    {unreadCount>9?"9+":unreadCount}
-                  </span>
-                )}
-              </button>
-              {/* Panneau notifications */}
-              {showNotifPanel&&(
-                <div style={{position:"absolute",top:"calc(100% + 10px)",right:0,width:340,maxHeight:480,background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,boxShadow:"0 16px 48px rgba(0,0,0,.4)",zIndex:500,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-                  {/* Header */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--border)"}}>
-                    <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}>
-                      <Bell size={14}/>Notifications
-                      {unreadCount>0&&<span style={{background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:99}}>{unreadCount}</span>}
-                    </div>
-                    <div style={{display:"flex",gap:6}}>
-                      {unreadCount>0&&(
-                        <button className="btn-secondary" style={{fontSize:11,padding:"4px 10px",gap:4}} onClick={markAllRead}>
-                          <CheckCircle size={11}/>Tout lire
-                        </button>
-                      )}
-                      {notifications.length>0&&(
-                        <button className="btn-secondary" style={{fontSize:11,padding:"4px 10px",gap:4,color:"#f87171"}} onClick={clearAllNotifications}>
-                          <Trash size={11}/>Effacer
-                        </button>
-                      )}
-                      <button className="icon-btn" onClick={()=>setShowNotifPanel(false)}><X size={14}/></button>
-                    </div>
-                  </div>
-                  {/* Liste */}
-                  <div style={{overflowY:"auto",flex:1}}>
-                    {notifications.length===0?(
-                      <div style={{textAlign:"center",padding:"32px 20px",color:"var(--muted)"}}>
-                        <BellOff size={32} style={{opacity:.3,margin:"0 auto 10px",display:"block"}}/>
-                        <div style={{fontSize:13}}>Aucune notification</div>
-                      </div>
-                    ):notifications.map(n=>(
-                      <div key={n.id}
-                        onClick={()=>!n.is_read&&markOneRead(n.id)}
-                        style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--border)",cursor:n.is_read?"default":"pointer",background:n.is_read?"transparent":"rgba(91,156,246,.04)",transition:"background .15s"}}>
-                        {/* Icône selon le type */}
-                        <div style={{width:34,height:34,borderRadius:9,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
-                          background:
-                            n.type==="file_uploaded"?"rgba(91,156,246,.15)":
-                            n.type==="file_deleted"?"rgba(239,68,68,.15)":
-                            n.type==="folder_created"?"rgba(251,191,36,.15)":
-                            n.type==="file_shared"?"rgba(52,211,153,.15)":
-                            "rgba(167,139,250,.15)",
-                          color:
-                            n.type==="file_uploaded"?"var(--accent)":
-                            n.type==="file_deleted"?"#f87171":
-                            n.type==="folder_created"?"#fbbf24":
-                            n.type==="file_shared"?"var(--green)":
-                            "var(--accent2)",
-                        }}>
-                          {n.type==="file_uploaded"&&<Upload size={15}/>}
-                          {n.type==="file_deleted"&&<Trash2 size={15}/>}
-                          {n.type==="folder_created"&&<Folder size={15}/>}
-                          {n.type==="file_shared"&&<Share2 size={15}/>}
-                          {n.type==="user_created"&&<UserPlus size={15}/>}
-                        </div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,lineHeight:1.4,color:n.is_read?"var(--muted)":"var(--text)",fontWeight:n.is_read?400:500}}>
-                            {n.message}
-                          </div>
-                          <div style={{fontSize:11,color:"var(--muted)",marginTop:4}}>
-                            {formatDate(n.created_at)}
-                          </div>
-                        </div>
-                        {!n.is_read&&(
-                          <div style={{width:7,height:7,borderRadius:"50%",background:"var(--accent)",flexShrink:0,marginTop:4}}/>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </header>
 
           <div className="content">

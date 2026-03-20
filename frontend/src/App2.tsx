@@ -6,8 +6,7 @@ import {
   File, FileImage, FileVideo, FileAudio, FileArchive, FileCode, FileSpreadsheet,
   HardDrive, Database, Server, CheckCircle, AlertCircle, Home, LogOut,
   Eye, EyeOff, Shield, UserPlus, ToggleLeft, ToggleRight, Lock,
-  Share2, UserCheck, Link2, Unlink,
-  Bell, BellOff, Trash
+  Share2, UserCheck, Link2, Unlink
 } from "lucide-react";
 
 const API = "http://192.168.43.183:8000";
@@ -18,10 +17,6 @@ type FolderItem = { id:string; name:string; type:"folder"; parentId:string|null;
 type Item = FileItem | FolderItem;
 type UserType = { id:string; username:string; email:string; is_admin:boolean; is_active:boolean; created_at:string; };
 type ShareItem = { id:string; item_type:"file"|"folder"; item_id:string; owner_id:string; shared_with_id:string; created_at:string; item_name?:string; owner_username?:string; shared_with_username?:string; };
-type NotifItem = { id:string; user_id:string; type:string; message:string; extra:string|null; is_read:boolean; created_at:string; };
-
-// ─── Themes ───────────────────────────────────────────────────────────────────
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getFileIcon = (ext?: string, size=16) => {
@@ -70,77 +65,6 @@ const StatCard = ({icon,label,value,color}:{icon:React.ReactNode;label:string;va
 );
 
 // ════════════════════════════════════════════════════════════════════════════
-
-// ── THEME SYSTEM ──────────────────────────────────────────────────────────────
-type ThemeId = "dark" | "light";
-type FontId = "syne_dm" | "inter" | "mono" | "poppins";
-
-const THEMES: { id: ThemeId; label: string; emoji: string; vars: Record<string,string> }[] = [
-  {
-    id: "dark", label: "Sombre", emoji: "🌙",
-    vars: { "--bg":"#0d0f14","--sidebar":"#12151c","--card":"#181b24","--card2":"#1e2230","--border":"rgba(255,255,255,0.07)","--text":"#e8eaf0","--muted":"#7a7f96","--accent":"#3b82f6" }
-  },
-  {
-    id: "light", label: "Clair", emoji: "☀️",
-    vars: { "--bg":"#f0f2f7","--sidebar":"#ffffff","--card":"#ffffff","--card2":"#f5f7fc","--border":"rgba(0,0,0,0.08)","--text":"#1a1d2e","--muted":"#8890a8","--accent":"#3b82f6" }
-  },
-];
-
-const FONTS: { id: FontId; label: string; family: string; url: string }[] = [
-  { id:"syne_dm",  label:"Syne / DM Sans",    family:"Syne, sans-serif",        url:"https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" },
-  { id:"inter",    label:"Inter",              family:"Inter, sans-serif",        url:"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" },
-  { id:"mono",     label:"JetBrains Mono",     family:"JetBrains Mono, monospace",url:"https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" },
-  { id:"poppins",  label:"Poppins",            family:"Poppins, sans-serif",      url:"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" },
-];
-
-const THEME_STORAGE_KEY = "nadjcloud_theme";
-const FONT_STORAGE_KEY  = "nadjcloud_font";
-
-// Apply saved theme immediately on module load (before first render)
-(() => {
-  const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as ThemeId) || "dark";
-  const savedFont  = (localStorage.getItem(FONT_STORAGE_KEY)  as FontId)  || "syne_dm";
-  const theme = THEMES.find(t => t.id === savedTheme) ?? THEMES[0];
-  const font  = FONTS.find(f => f.id === savedFont)   ?? FONTS[0];
-  const root  = document.documentElement;
-  Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  root.style.setProperty("--font-display", font.family);
-  root.style.setProperty("--font-body", savedFont === "syne_dm" ? "DM Sans, sans-serif" : font.family);
-  document.body.style.background = theme.vars["--bg"];
-  // Inject font
-  const linkId = "gfont-init";
-  if (!document.getElementById(linkId)) {
-    const link = document.createElement("link");
-    link.id = linkId; link.rel = "stylesheet"; link.href = font.url;
-    document.head.appendChild(link);
-  }
-})();
-
-const getSavedTheme = (): ThemeId => {
-  try { return (localStorage.getItem(THEME_STORAGE_KEY) as ThemeId) || "dark"; } catch { return "dark"; }
-};
-const getSavedFont = (): FontId => {
-  try { return (localStorage.getItem(FONT_STORAGE_KEY) as FontId) || "syne_dm"; } catch { return "syne_dm"; }
-};
-
-const applyTheme = (themeId: ThemeId, fontId: FontId) => {
-  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0];
-  const font  = FONTS.find(f => f.id === fontId)   ?? FONTS[0];
-  const linkId = "gfont-" + fontId;
-  if (!document.getElementById(linkId)) {
-    const link = document.createElement("link");
-    link.id = linkId; link.rel = "stylesheet"; link.href = font.url;
-    document.head.appendChild(link);
-  }
-  const root = document.documentElement;
-  Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-  root.style.setProperty("--font-display", font.family);
-  root.style.setProperty("--font-body", fontId === "syne_dm" ? "DM Sans, sans-serif" : font.family);
-  document.body.style.background = theme.vars["--bg"];
-  localStorage.setItem(THEME_STORAGE_KEY, themeId);
-  localStorage.setItem(FONT_STORAGE_KEY,  fontId);
-};
-
 // LOGIN PAGE
 // ════════════════════════════════════════════════════════════════════════════
 const LoginPage = ({onLogin}:{onLogin:(user:UserType)=>void}) => {
@@ -165,15 +89,7 @@ const LoginPage = ({onLogin}:{onLogin:(user:UserType)=>void}) => {
   };
 
   return (
-    <>
-    <style>{`
-      *, *::before, *::after { box-sizing: border-box !important; margin: 0; padding: 0; }
-      body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
-      input { box-sizing: border-box !important; }
-      .spinner { border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
-      @keyframes spin { to { transform: rotate(360deg); } }
-    `}</style>
-    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,boxSizing:"border-box"}}>
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div style={{width:"100%",maxWidth:400}}>
         <div style={{textAlign:"center",marginBottom:36}}>
           <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,var(--accent),var(--accent2))",marginBottom:14}}>
@@ -182,14 +98,14 @@ const LoginPage = ({onLogin}:{onLogin:(user:UserType)=>void}) => {
           <div style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:800,letterSpacing:-0.5}}>NadjCloud</div>
           <div style={{color:"var(--muted)",fontSize:13,marginTop:6}}>Connectez-vous pour accéder à votre espace</div>
         </div>
-        <div style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,padding:28,boxShadow:"0 24px 60px rgba(0,0,0,0.3)",overflow:"hidden"}}>
+        <div style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,padding:28,boxShadow:"0 24px 60px rgba(0,0,0,0.3)"}}>
           <form onSubmit={handleLogin}>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:11,fontWeight:600,color:"var(--muted)",letterSpacing:.5,textTransform:"uppercase",display:"block",marginBottom:8}}>Nom d'utilisateur</label>
               <div style={{position:"relative"}}>
                 <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"var(--muted)",display:"flex"}}><User size={15}/></span>
                 <input type="text" placeholder="Votre identifiant..." value={username} onChange={e=>setUsername(e.target.value)}
-                  style={{width:"100%",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:9,color:"var(--text)",fontFamily:"var(--font-body)",fontSize:14,padding:"11px 14px 11px 38px",outline:"none",boxSizing:"border-box"}}
+                  style={{width:"100%",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:9,color:"var(--text)",fontFamily:"var(--font-body)",fontSize:14,padding:"11px 14px 11px 38px",outline:"none"}}
                   onFocus={e=>e.target.style.borderColor="var(--accent)"} onBlur={e=>e.target.style.borderColor="var(--border)"}/>
               </div>
             </div>
@@ -198,7 +114,7 @@ const LoginPage = ({onLogin}:{onLogin:(user:UserType)=>void}) => {
               <div style={{position:"relative"}}>
                 <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:"var(--muted)",display:"flex"}}><Lock size={15}/></span>
                 <input type={showPwd?"text":"password"} placeholder="Votre mot de passe..." value={password} onChange={e=>setPassword(e.target.value)}
-                  style={{width:"100%",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:9,color:"var(--text)",fontFamily:"var(--font-body)",fontSize:14,padding:"11px 40px 11px 38px",outline:"none",boxSizing:"border-box"}}
+                  style={{width:"100%",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:9,color:"var(--text)",fontFamily:"var(--font-body)",fontSize:14,padding:"11px 40px 11px 38px",outline:"none"}}
                   onFocus={e=>e.target.style.borderColor="var(--accent)"} onBlur={e=>e.target.style.borderColor="var(--border)"}/>
                 <button type="button" style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"var(--muted)",display:"flex",padding:4}} onClick={()=>setShowPwd(!showPwd)}>
                   {showPwd?<EyeOff size={15}/>:<Eye size={15}/>}
@@ -215,7 +131,6 @@ const LoginPage = ({onLogin}:{onLogin:(user:UserType)=>void}) => {
         <div style={{textAlign:"center",marginTop:20,color:"var(--muted)",fontSize:12}}>Contactez l'administrateur pour obtenir un accès</div>
       </div>
     </div>
-    </>
   );
 };
 
@@ -406,24 +321,13 @@ export default function App() {
   const [searchQuery,setSearchQuery] = useState("");
   const [section,setSection] = useState<string>("dashboard");
   const [toast,setToast] = useState<{msg:string;ok:boolean}|null>(null);
-  const [notifications,setNotifications] = useState<NotifItem[]>([]);
-  const [unreadCount,setUnreadCount] = useState(0);
-  const [showNotifPanel,setShowNotifPanel] = useState(false);
   const [pendingFile,setPendingFile] = useState<File|null>(null);
   const [dragOver,setDragOver] = useState(false);
   const [sidebarOpen,setSidebarOpen] = useState(false);
   const [newUserForm,setNewUserForm] = useState({username:"",email:"",password:"",is_admin:false});
   const [showNewUserPwd,setShowNewUserPwd] = useState(false);
   const [shareTargetUserId,setShareTargetUserId] = useState("");
-  const [activeTheme, setActiveTheme] = useState<ThemeId>(getSavedTheme());
-  const [activeFont, setActiveFont] = useState<FontId>(getSavedFont());
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // ── Apply theme on mount and change ──
-  // Apply theme on mount AND whenever theme/font changes
-  useEffect(() => {
-    applyTheme(activeTheme, activeFont);
-  }, [activeTheme, activeFont]);
 
   const showToast = (msg:string,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3500);};
 
@@ -457,10 +361,10 @@ export default function App() {
   const loadData=async()=>{
     setLoading(true);
     try {
-      const [fr,fir,swr,sbr,ur,nr]=await Promise.all([
+      const [fr,fir,swr,sbr,ur]=await Promise.all([
         apiFetch("/folders"),apiFetch("/files"),
         apiFetch("/shares/with-me"),apiFetch("/shares/by-me"),
-        apiFetch("/users"),apiFetch("/notifications"),
+        apiFetch("/users"),
       ]);
       if(fr&&fir){
         const fd=await fr.json(); const fid=await fir.json();
@@ -472,25 +376,11 @@ export default function App() {
       if(swr){setSharedWithMe(await swr.json());}
       if(sbr){setSharedByMe(await sbr.json());}
       if(ur){setUsers(await ur.json());}
-      if(nr){
-        const notifs=await nr.json();
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter((n:NotifItem)=>!n.is_read).length);
-      }
     } catch{showToast("Erreur de chargement",false);}
     setLoading(false);
   };
 
-  // Polling notifications toutes les 30 secondes
-  useEffect(()=>{
-    if(!currentUser)return;
-    loadData();
-    const interval=setInterval(async()=>{
-      const res=await apiFetch("/notifications/unread-count");
-      if(res&&res.ok){const d=await res.json();setUnreadCount(d.count);}
-    },30000);
-    return ()=>clearInterval(interval);
-  },[currentUser]);
+  useEffect(()=>{if(currentUser)loadData();},[currentUser]);
 
   const files=useMemo(()=>items.filter(i=>i.type==="file") as FileItem[],[items]);
   const folders=useMemo(()=>items.filter(i=>i.type==="folder") as FolderItem[],[items]);
@@ -506,7 +396,7 @@ export default function App() {
     if(!res||!res.ok){showToast("Erreur création dossier",false);return;}
     const d=await res.json();
     setItems(p=>[...p,{id:d.id,name:d.name,type:"folder",parentId:d.parent_id??null,isOpen:false,owner_id:d.owner_id}]);
-    showToast(`Dossier "${name}" créé ✓`); loadNotifications();
+    showToast(`Dossier "${name}" créé ✓`);
   };
 
   const uploadFile=async()=>{
@@ -518,7 +408,7 @@ export default function App() {
     if(!res.ok){showToast("Erreur upload",false);setUploading(false);return;}
     const d=await res.json();
     setItems(p=>[...p,{id:d.id,name:d.name,type:"file",ext:d.ext??d.name.split(".").pop()??"txt",size:formatSize(d.size),storage_path:d.storage_path,modified:formatDate(d.created_at),parentId:d.folder_id??null,owner_id:d.owner_id}]);
-    showToast(`"${pendingFile.name}" téléversé ✓`); loadNotifications();
+    showToast(`"${pendingFile.name}" téléversé ✓`);
     setUploading(false);
   };
 
@@ -531,7 +421,7 @@ export default function App() {
   const deleteFile=async(id:string)=>{
     const res=await apiFetch(`/files/${id}`,{method:"DELETE"});
     if(!res||!res.ok){showToast("Erreur suppression",false);return;}
-    setItems(p=>p.filter(i=>i.id!==id));showToast("Fichier supprimé"); loadNotifications();
+    setItems(p=>p.filter(i=>i.id!==id));showToast("Fichier supprimé");
   };
 
   const downloadFile=(file:FileItem)=>window.open(`${API}/uploads/${file.storage_path}`,"_blank");
@@ -545,7 +435,7 @@ export default function App() {
     if(!res||!res.ok){const d=await res?.json();showToast(d?.detail||"Erreur partage",false);return;}
     const d=await res.json();
     setSharedByMe(p=>[d,...p]);
-    showToast(`Partagé avec ${users.find(u=>u.id===shareTargetUserId)?.username} ✓`); loadNotifications();
+    showToast(`Partagé avec ${users.find(u=>u.id===shareTargetUserId)?.username} ✓`);
   };
 
   const deleteShare=async(id:string)=>{
@@ -560,7 +450,7 @@ export default function App() {
     if(!newUserForm.username||!newUserForm.email||!newUserForm.password){showToast("Remplissez tous les champs",false);return;}
     const res=await apiFetch("/users",{method:"POST",body:JSON.stringify(newUserForm)});
     if(!res||!res.ok){const d=await res?.json();showToast(d?.detail||"Erreur création",false);return;}
-    const d=await res.json();setUsers(p=>[...p,d]);showToast(`Utilisateur "${newUserForm.username}" créé ✓`); loadNotifications();
+    const d=await res.json();setUsers(p=>[...p,d]);showToast(`Utilisateur "${newUserForm.username}" créé ✓`);
   };
 
   const toggleUser=async(id:string)=>{
@@ -574,34 +464,6 @@ export default function App() {
     const res=await apiFetch(`/users/${id}`,{method:"DELETE"});
     if(!res||!res.ok){showToast("Erreur suppression",false);return;}
     setUsers(p=>p.filter(u=>u.id!==id));showToast("Utilisateur supprimé");
-  };
-
-  // ── Notification functions ──
-  const loadNotifications=async()=>{
-    const res=await apiFetch("/notifications");
-    if(res&&res.ok){
-      const notifs=await res.json();
-      setNotifications(notifs);
-      setUnreadCount(notifs.filter((n:NotifItem)=>!n.is_read).length);
-    }
-  };
-
-  const markAllRead=async()=>{
-    await apiFetch("/notifications/read-all",{method:"PUT"});
-    setNotifications(p=>p.map(n=>({...n,is_read:true})));
-    setUnreadCount(0);
-  };
-
-  const clearAllNotifications=async()=>{
-    await apiFetch("/notifications/clear",{method:"DELETE"});
-    setNotifications([]);
-    setUnreadCount(0);
-  };
-
-  const markOneRead=async(id:string)=>{
-    await apiFetch(`/notifications/${id}/read`,{method:"PUT"});
-    setNotifications(p=>p.map(n=>n.id===id?{...n,is_read:true}:n));
-    setUnreadCount(p=>Math.max(0,p-1));
   };
 
   const confirmModal=async()=>{
@@ -629,7 +491,7 @@ export default function App() {
   },[folders,selectedId,items]);
 
   const totalSize=useMemo(()=>files.reduce((a,f)=>a+parseFloat(f.size),0).toFixed(1),[files]);
-  const navigate=(s:string)=>{setSection(s);setSidebarOpen(false);setShowNotifPanel(false);};
+  const navigate=(s:string)=>{setSection(s);setSidebarOpen(false);};
 
   const TreeNode=({item,depth=0}:{item:Item;depth?:number})=>{
     const ch=getChildren(item.id);const isF=item.type==="folder";
@@ -719,7 +581,7 @@ export default function App() {
 
   if(authLoading) return (
     <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      {/* Theme applied via applyTheme() in useEffect */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400&display=swap');*{box-sizing:border-box;margin:0;padding:0}:root{--bg:#0d0f14;--text:#e8eaf0;--muted:#7a7f96;--font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}body{background:var(--bg);color:var(--text);font-family:var(--font-body)}@keyframes spin{to{transform:rotate(360deg)}}.spinner{border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}`}</style>
       <div style={{textAlign:"center"}}>
         <div className="spinner" style={{width:36,height:36,margin:"0 auto 16px"}}/>
         <div style={{color:"var(--muted)",fontSize:13}}>Chargement de NadjCloud...</div>
@@ -729,7 +591,7 @@ export default function App() {
 
   if(!currentUser) return (
     <>
-      {/* Theme applied via applyTheme() */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}:root{--bg:#0d0f14;--card:#181b24;--card2:#1e2230;--border:rgba(255,255,255,0.07);--text:#e8eaf0;--muted:#7a7f96;--accent:#5b9cf6;--accent2:#a78bfa;--green:#34d399;--font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}body{background:var(--bg);color:var(--text);font-family:var(--font-body)}@keyframes spin{to{transform:rotate(360deg)}}.spinner{border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}`}</style>
       <LoginPage onLogin={handleLogin}/>
     </>
   );
@@ -738,11 +600,8 @@ export default function App() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        :root{--accent2:#a78bfa;--green:#34d399;--orange:#fb923c;--bottom-nav:62px}
-        body{background:var(--bg);color:var(--text);font-family:var(--font-body)}
-        input,button,select{font-family:var(--font-body)}
+        :root{--bg:#0d0f14;--sidebar:#12151c;--card:#181b24;--card2:#1e2230;--border:rgba(255,255,255,0.07);--text:#e8eaf0;--muted:#7a7f96;--accent:#5b9cf6;--accent2:#a78bfa;--green:#34d399;--orange:#fb923c;--font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--bottom-nav:62px}
         body{background:var(--bg);color:var(--text);font-family:var(--font-body)}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -788,8 +647,6 @@ export default function App() {
         .content{flex:1;overflow-y:auto;padding:20px}
         .content::-webkit-scrollbar{width:5px}
         .content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-        .notif-panel::-webkit-scrollbar{width:4px}
-        .notif-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
         .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;transition:transform .15s,border-color .15s;animation:fadeIn .3s ease both}
         .stat-card:hover{transform:translateY(-2px);border-color:var(--accent)}
@@ -925,91 +782,6 @@ export default function App() {
                 <button className="btn-primary" onClick={()=>openModal("newUser")}><UserPlus size={14}/>Nouvel utilisateur</button>
               </div>
             )}
-            {/* 🔔 Cloche notifications */}
-            <div style={{position:"relative",flexShrink:0}}>
-              <button
-                onClick={()=>setShowNotifPanel(p=>!p)}
-                style={{position:"relative",background:"var(--card2)",border:"1px solid var(--border)",borderRadius:9,padding:"7px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"var(--text)",transition:"background .15s"}}
-                className="btn-icon">
-                <Bell size={18}/>
-                {unreadCount>0&&(
-                  <span style={{position:"absolute",top:-5,right:-5,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,width:18,height:18,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid var(--bg)"}}>
-                    {unreadCount>9?"9+":unreadCount}
-                  </span>
-                )}
-              </button>
-              {/* Panneau notifications */}
-              {showNotifPanel&&(
-                <div style={{position:"absolute",top:"calc(100% + 10px)",right:0,width:340,maxHeight:480,background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,boxShadow:"0 16px 48px rgba(0,0,0,.4)",zIndex:500,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-                  {/* Header */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderBottom:"1px solid var(--border)"}}>
-                    <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:8}}>
-                      <Bell size={14}/>Notifications
-                      {unreadCount>0&&<span style={{background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:99}}>{unreadCount}</span>}
-                    </div>
-                    <div style={{display:"flex",gap:6}}>
-                      {unreadCount>0&&(
-                        <button className="btn-secondary" style={{fontSize:11,padding:"4px 10px",gap:4}} onClick={markAllRead}>
-                          <CheckCircle size={11}/>Tout lire
-                        </button>
-                      )}
-                      {notifications.length>0&&(
-                        <button className="btn-secondary" style={{fontSize:11,padding:"4px 10px",gap:4,color:"#f87171"}} onClick={clearAllNotifications}>
-                          <Trash size={11}/>Effacer
-                        </button>
-                      )}
-                      <button className="icon-btn" onClick={()=>setShowNotifPanel(false)}><X size={14}/></button>
-                    </div>
-                  </div>
-                  {/* Liste */}
-                  <div style={{overflowY:"auto",flex:1}}>
-                    {notifications.length===0?(
-                      <div style={{textAlign:"center",padding:"32px 20px",color:"var(--muted)"}}>
-                        <BellOff size={32} style={{opacity:.3,margin:"0 auto 10px",display:"block"}}/>
-                        <div style={{fontSize:13}}>Aucune notification</div>
-                      </div>
-                    ):notifications.map(n=>(
-                      <div key={n.id}
-                        onClick={()=>!n.is_read&&markOneRead(n.id)}
-                        style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--border)",cursor:n.is_read?"default":"pointer",background:n.is_read?"transparent":"rgba(91,156,246,.04)",transition:"background .15s"}}>
-                        {/* Icône selon le type */}
-                        <div style={{width:34,height:34,borderRadius:9,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
-                          background:
-                            n.type==="file_uploaded"?"rgba(91,156,246,.15)":
-                            n.type==="file_deleted"?"rgba(239,68,68,.15)":
-                            n.type==="folder_created"?"rgba(251,191,36,.15)":
-                            n.type==="file_shared"?"rgba(52,211,153,.15)":
-                            "rgba(167,139,250,.15)",
-                          color:
-                            n.type==="file_uploaded"?"var(--accent)":
-                            n.type==="file_deleted"?"#f87171":
-                            n.type==="folder_created"?"#fbbf24":
-                            n.type==="file_shared"?"var(--green)":
-                            "var(--accent2)",
-                        }}>
-                          {n.type==="file_uploaded"&&<Upload size={15}/>}
-                          {n.type==="file_deleted"&&<Trash2 size={15}/>}
-                          {n.type==="folder_created"&&<Folder size={15}/>}
-                          {n.type==="file_shared"&&<Share2 size={15}/>}
-                          {n.type==="user_created"&&<UserPlus size={15}/>}
-                        </div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,lineHeight:1.4,color:n.is_read?"var(--muted)":"var(--text)",fontWeight:n.is_read?400:500}}>
-                            {n.message}
-                          </div>
-                          <div style={{fontSize:11,color:"var(--muted)",marginTop:4}}>
-                            {formatDate(n.created_at)}
-                          </div>
-                        </div>
-                        {!n.is_read&&(
-                          <div style={{width:7,height:7,borderRadius:"50%",background:"var(--accent)",flexShrink:0,marginTop:4}}/>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </header>
 
           <div className="content">
@@ -1213,111 +985,12 @@ export default function App() {
 
             {/* Settings */}
             {section==="settings"&&(<>
-              {/* ── Apparence ── */}
-              <div className="section-title" style={{marginBottom:14}}><Settings size={14}/>Apparence</div>
-
-              {/* Thème */}
-              <div className="settings-section" style={{marginBottom:16}}>
-                <div className="settings-row" style={{flexDirection:"column",alignItems:"flex-start",gap:14}}>
-                  <div><div className="settings-label">Thème</div><div className="settings-sub">Choisissez l'apparence de l'interface</div></div>
-                  <div style={{display:"flex",gap:10,width:"100%"}}>
-                    {THEMES.map(t=>(
-                      <button key={t.id}
-                        onClick={()=>setActiveTheme(t.id)}
-                        style={{
-                          flex:1, padding:"14px 10px", borderRadius:12, cursor:"pointer",
-                          border: activeTheme===t.id ? "2px solid var(--accent)" : "2px solid var(--border)",
-                          background: activeTheme===t.id ? "rgba(91,156,246,.1)" : "var(--card2)",
-                          transition:"all .2s", display:"flex", flexDirection:"column", alignItems:"center", gap:8,
-                        }}>
-                        {/* Mini preview */}
-                        <div style={{
-                          width:64, height:44, borderRadius:8, overflow:"hidden",
-                          border:"1px solid var(--border)", position:"relative",
-                          background: t.vars["--bg"],
-                        }}>
-                          <div style={{position:"absolute",left:0,top:0,bottom:0,width:18,background:t.vars["--sidebar"]}}/>
-                          <div style={{position:"absolute",left:20,top:6,right:4,height:6,borderRadius:3,background:t.vars["--card"]}}/>
-                          <div style={{position:"absolute",left:20,top:16,right:4,height:4,borderRadius:2,background:t.vars["--card2"]}}/>
-                          <div style={{position:"absolute",left:20,top:24,width:16,height:4,borderRadius:2,background:t.vars["--accent"]}}/>
-                          {activeTheme===t.id&&(
-                            <div style={{position:"absolute",top:2,right:2,width:12,height:12,borderRadius:"50%",background:t.vars["--accent"],display:"flex",alignItems:"center",justifyContent:"center"}}>
-                              <CheckCircle size={8} color="#fff"/>
-                            </div>
-                          )}
-                        </div>
-                        <span style={{fontSize:13,fontWeight:600,color:activeTheme===t.id?"var(--accent)":"var(--text)"}}>{t.emoji} {t.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Police */}
-              <div className="settings-section" style={{marginBottom:16}}>
-                <div className="settings-row" style={{flexDirection:"column",alignItems:"flex-start",gap:14}}>
-                  <div><div className="settings-label">Police d'écriture</div><div className="settings-sub">Choisissez la typographie de l'interface</div></div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,width:"100%"}}>
-                    {FONTS.map(f=>(
-                      <button key={f.id}
-                        onClick={()=>setActiveFont(f.id)}
-                        style={{
-                          padding:"12px 14px", borderRadius:10, cursor:"pointer",
-                          border: activeFont===f.id ? "2px solid var(--accent)" : "2px solid var(--border)",
-                          background: activeFont===f.id ? "rgba(91,156,246,.1)" : "var(--card2)",
-                          transition:"all .2s", display:"flex", alignItems:"center", justifyContent:"space-between",
-                        }}>
-                        <div style={{textAlign:"left"}}>
-                          <div style={{fontSize:15,fontFamily:f.family,fontWeight:600,color:activeFont===f.id?"var(--accent)":"var(--text)"}}>{f.label}</div>
-                          <div style={{fontSize:11,fontFamily:f.family,color:"var(--muted)",marginTop:2}}>Aa Bb Cc 123</div>
-                        </div>
-                        {activeFont===f.id&&<CheckCircle size={16} style={{color:"var(--accent)",flexShrink:0}}/>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Aperçu */}
-              <div className="settings-section" style={{marginBottom:24}}>
-                <div className="settings-row" style={{flexDirection:"column",alignItems:"flex-start",gap:10}}>
-                  <div><div className="settings-label">Aperçu</div><div className="settings-sub">Voici à quoi ressemble votre interface</div></div>
-                  <div style={{width:"100%",background:"var(--bg)",borderRadius:10,padding:14,border:"1px solid var(--border)"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                      <div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}}><Folder size={16} color="#fff"/></div>
-                      <div>
-                        <div style={{fontSize:14,fontWeight:600,fontFamily:"var(--font-body)"}}>Mon Dossier</div>
-                        <div style={{fontSize:11,color:"var(--muted)",fontFamily:"var(--font-body)"}}>3 fichiers · 12 MB</div>
-                      </div>
-                    </div>
-                    <div style={{height:4,borderRadius:99,background:"var(--card2)",marginBottom:8}}>
-                      <div style={{width:"65%",height:"100%",borderRadius:99,background:"linear-gradient(90deg,var(--accent),var(--accent2))"}}/>
-                    </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <span style={{fontSize:11,background:"rgba(91,156,246,.15)",color:"var(--accent)",padding:"3px 8px",borderRadius:99,fontFamily:"var(--font-body)"}}>PDF</span>
-                      <span style={{fontSize:11,background:"rgba(167,139,250,.15)",color:"var(--accent2)",padding:"3px 8px",borderRadius:99,fontFamily:"var(--font-body)"}}>Images</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Backend info */}
               <div className="section-title" style={{marginBottom:12}}><Server size={14}/>Backend</div>
               <div className="settings-section">
-                {[
-                  {icon:<Server size={14}/>,label:"FastAPI",sub:"http://192.168.43.183:8000"},
-                  {icon:<Database size={14}/>,label:"MySQL",sub:"filevault"},
-                  {icon:<Shield size={14}/>,label:"Auth",sub:"JWT · HS256"},
-                  {icon:<Share2 size={14}/>,label:"Partage",sub:"Lecture seule · par utilisateur"},
-                ].map((r,i)=>(
+                {[{icon:<Server size={14}/>,label:"FastAPI",sub:"http://192.168.43.183:8000"},{icon:<Database size={14}/>,label:"MySQL",sub:"filevault"},{icon:<Shield size={14}/>,label:"Auth",sub:"JWT · HS256"},{icon:<Share2 size={14}/>,label:"Partage",sub:"Lecture seule · par utilisateur"}].map((r,i)=>(
                   <div className="settings-row" key={i}>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{color:"var(--muted)"}}>{r.icon}</span>
-                      <div><div className="settings-label">{r.label}</div><div className="settings-sub">{r.sub}</div></div>
-                    </div>
-                    <span style={{background:"rgba(52,211,153,.15)",color:"var(--green)",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:99,display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
-                      <CheckCircle size={10}/>Actif
-                    </span>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:"var(--muted)"}}>{r.icon}</span><div><div className="settings-label">{r.label}</div><div className="settings-sub">{r.sub}</div></div></div>
+                    <span style={{background:"rgba(52,211,153,.15)",color:"var(--green)",fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:99,display:"flex",alignItems:"center",gap:4,flexShrink:0}}><CheckCircle size={10}/>Actif</span>
                   </div>
                 ))}
               </div>

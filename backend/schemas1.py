@@ -69,20 +69,9 @@ class ShareResponse(BaseModel):
     owner_id: str
     shared_with_id: str
     created_at: datetime
+    # Infos enrichies
     item_name: Optional[str] = None
     owner_username: Optional[str] = None
     shared_with_username: Optional[str] = None
-    class Config:
-        from_attributes = True
-
-# ── Notification ──────────────────────────────────────────────────────────────
-class NotificationResponse(BaseModel):
-    id: str
-    user_id: str
-    type: str
-    message: str
-    extra: Optional[str]
-    is_read: bool
-    created_at: datetime
     class Config:
         from_attributes = True
