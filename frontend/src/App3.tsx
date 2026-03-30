@@ -10,7 +10,7 @@ import {
   Bell, BellOff, Trash
 } from "lucide-react";
 
-const API = "http://192.168.1.164:8000";
+const API = "http://localhost:8000";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FileItem = { id:string; name:string; type:"file"; ext:string; size:string; storage_path:string; modified:string; parentId:string|null; owner_id:string; };
@@ -1305,7 +1305,7 @@ export default function App() {
               <div className="section-title" style={{marginBottom:12}}><Server size={14}/>Backend</div>
               <div className="settings-section">
                 {[
-                  {icon:<Server size={14}/>,label:"FastAPI",sub:"http://192.168.1.164:8000"},
+                  {icon:<Server size={14}/>,label:"FastAPI",sub:"http://192.168.43.183:8000"},
                   {icon:<Database size={14}/>,label:"MySQL",sub:"filevault"},
                   {icon:<Shield size={14}/>,label:"Auth",sub:"JWT · HS256"},
                   {icon:<Share2 size={14}/>,label:"Partage",sub:"Lecture seule · par utilisateur"},
